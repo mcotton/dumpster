@@ -1,15 +1,25 @@
 from flask import Flask
 from flask import request
+from redis import Redis
 
 
 app = Flask(__name__)
+redis = Redis(host='redis', port=6379)
 
-@app.route("/", methods=["POST", "GET"])
+@app.route("/")
 def hello():
+    redis.incr('hits')
+    return "This Compose/Flask demo has been viewed %s time(s)." % redis.get('hits')
+
+
+@app.route("/webhook", methods=["POST", "GET"])
+def webhook():
     if request.is_json:
         print(request.get_json())
     else:
         print(request.data)
     return request.data
 
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", debug=True)
 
