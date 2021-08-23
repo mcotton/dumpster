@@ -3,11 +3,7 @@ services:
   web:
     build: .
     ports:
-      - "5000:5000"
+      - "5999:5998"
     volumes:
       - .:/code
-    depends_on:
-      - redis
-
-  redis:
-    image: redis
+    tty: true
