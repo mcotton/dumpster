@@ -1,25 +1,42 @@
+import logging
 from flask import Flask
 from flask import request
-from redis import Redis
+from flask.logging import default_handler
+
+class RequestFormatter(logging.Formatter):
+    def format(self, record):
+        record.url = request.url
+        record.remote_addr = request.remote_addr
+        return super().format(record)
+
+formatter = RequestFormatter(
+        '[%(asctime)s] %(remote_addr)s requested %(url)s\n'
+        '%(levelname)s in %(module)s: %(message)s'
+        )
+
+default_handler.setFormatter(formatter)
+
 
 
 app = Flask(__name__)
-redis = Redis(host='redis', port=6379)
 
-@app.route("/")
-def hello():
-    redis.incr('hits')
-    return "This Compose/Flask demo has been viewed %s time(s)." % redis.get('hits')
-
-
-@app.route("/webhook", methods=["POST", "GET"])
-def webhook():
+@app.route("/success", methods=["POST", "GET"])
+@app.route("/", methods=["POST", "GET"])
+def success():
     if request.is_json:
+        app.logger.info(request.get_json())
         print(request.get_json())
     else:
+        app.logger.info(request.data)
         print(request.data)
     return request.data
 
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", debug=True)
-
+@app.route("/failure", methods=["POST", "GET"])
+def failure():
+    if request.is_json:
+        app.logger.info(request.get_json())
+        print(request.get_json())
+    else:
+        app.logger.info(request.data)
+        print(request.data)
+    return request.data
